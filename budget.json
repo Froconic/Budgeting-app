@@ -1,0 +1,12 @@
+{
+    "month": "Test",
+    "actual": {
+        "electric": 230.0,
+        "food": 200.0,
+        "weed": 300.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 430.0
+    }
+}
