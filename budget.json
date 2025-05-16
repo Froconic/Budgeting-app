@@ -9,4 +9,114 @@
         "expected": 160,
         "actual": 430.0
     }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
+}{
+    "month": "Test 2",
+    "actual": {
+        "electric": 3.0,
+        "food": 5.0,
+        "weed": 9.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1143.0
+    }
+}{
+    "month": "Test 3",
+    "actual": {
+        "electric": 0.0,
+        "food": 0.0,
+        "weed": 0.0
+    },
+    "savings": {
+        "expected": 160,
+        "actual": 1160.0
+    }
 }

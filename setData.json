@@ -1,11 +1,13 @@
 {
-  "income": 500,
-  "expenses": {
-    "rent": 800,
-    "food": 500,
-    "electric": 200,
-    "youtube": 20,
-    "wifi": 20,
-    "weed": 300
-  }
+    "income": 500,
+    "Set Expenses": {
+        "Rent": 800,
+        "Youtube": 20,
+        "Wifi": 20
+    },
+    "Variable Expenses": {
+        "Weed": 250,
+        "Electric": 250,
+        "Food": 250
+    }
 }

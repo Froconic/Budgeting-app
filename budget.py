@@ -16,27 +16,38 @@ import os
 # Path to the JSON file that stores budget data
 setData = "C:/Users/akira/Desktop/Stuff/Code/GitHub/Budgeting-app/setData.json"
 outputFile = "C:/Users/akira/Desktop/Stuff/Code/GitHub/Budgeting-app/budget.json"
+recordFile = "C:/Users/akira/Documents/Second-Brain/Daily-Journal/2025/Monthly/Expenses.md"
+
+class Expense:
+  def __init__(self, name, value, row, frame):
+    self.name = name
+    self.value = value
+    # self.setExpense = setExpense
+    
+    self.label = ctk.CTkLabel(frame, text=name)
+    self.label.grid(row=row, column=1)
+    self.valueLabel = ctk.CTkLabel(frame, text=value)
+    self.valueLabel.grid(row=row, column=2)
+    
+    # if setExpense == True:
+    #   self.actualLabel = ctk.CTkEntry(frame, placeholder_text="name")
+    #   self.actualLabel.grid(row=row, column=4)
 
 # Function to load income and expenses data from the JSON file
-def loadData(file):
+def loadJSON(file):
     if os.path.exists(file):  # Check if the file exists
         with open(file, "r") as file:
             return json.load(file)  # Load and return the JSON data as a Python dictionary
     return {"income": 0, "expenses": {}}  # Return default structure if file doesn't exist
 
-# Load the budget data from the file
-budget = loadData(setData)
-
+# def loadData():
+  
 # Extract the income and expenses from the loaded data
-income = budget["income"]
-expenses = budget["expenses"]
-rent = expenses["rent"]
-electric = expenses["electric"]
-food = expenses["food"]
-weed = expenses["weed"]
-youtube = expenses["youtube"]
-wifi = expenses["wifi"]
-
+expenseList = []
+setExpenseList = []
+variableExpenseList = []
+startRow = 4
+  
 ctk.set_appearance_mode("dark")
 window = ctk.CTk()
 window.title("Budget Calculator")
@@ -48,7 +59,27 @@ window.grid_columnconfigure(0, weight=1)
 center = ctk.CTkFrame(window)
 center.grid(row=0, pady=20, padx=20)
 buttonFrame = ctk.CTkFrame(window)
-buttonFrame.grid(row=1, sticky="ew", pady=10)
+buttonFrame.grid(row=1, pady=10)
+
+budget = loadJSON(setData)
+setExpenses = []
+setExpenses = budget["Set Expenses"]
+for i, (name,value) in enumerate(setExpenses.items()):
+  expense = Expense(name, value, row=4+len(expenseList), frame=center)
+  expenseList.append(expense)
+  setExpenseList.append(expense)
+variableExpenses = []
+variableExpenses = budget["Variable Expenses"]
+for i, (name,value) in enumerate(variableExpenses.items()):
+  expense = Expense(name, value, row=4+len(expenseList), frame=center)
+  expense.actualValue = ctk.CTkEntry(center, placeholder_text=f"Actual {expense.name}")
+  expense.actualValue.grid(row=4+len(expenseList), column=3)
+  expenseList.append(expense)
+  variableExpenseList.append(expense)
+
+income = budget["income"]
+
+
 
 # create the center widgets
 center.grid_rowconfigure(0, weight=1)
@@ -70,93 +101,115 @@ incomeLabel.grid(row=2, column=1)
 expensesTitle = ctk.CTkLabel(center, text="Expenses")
 expensesTitle.grid(row=3, column=0, padx=10)
 
-# Rent
-rentExpense = ctk.CTkLabel(center, text="Rent")
-rentExpense.grid(row=4, column=1)
-rentData = ctk.CTkLabel(center, text=rent)
-rentData.grid(row=4, column=2)
-
-# Electric
-electricExpense = ctk.CTkLabel(center, text="Electric")
-electricExpense.grid(row=5, column=1)
-electricData = ctk.CTkLabel(center, text=electric)
-electricData.grid(row=5, column=2)
-
-# Food
-foodExpense = ctk.CTkLabel(center, text="Food")
-foodExpense.grid(row=6, column=1)
-foodData = ctk.CTkLabel(center, text=food)
-foodData.grid(row=6, column=2)
-
-# Weed
-weedExpense = ctk.CTkLabel(center, text="Weed")
-weedExpense.grid(row=7, column=1)
-weedData = ctk.CTkLabel(center, text=weed)
-weedData.grid(row=7, column=2)
-
-# YouTube
-youtubeExpense = ctk.CTkLabel(center, text="YouTube")
-youtubeExpense.grid(row=8, column=1)
-youtubeData = ctk.CTkLabel(center, text=youtube)
-youtubeData.grid(row=8, column=2)
-
-# WiFi
-wifiExpense = ctk.CTkLabel(center, text="WiFi")
-wifiExpense.grid(row=9, column=1)
-wifiData = ctk.CTkLabel(center, text=wifi)
-wifiData.grid(row=9, column=2)
-
 actual = ctk.CTkLabel(center, text="Actual Spending")
-actual.grid(row=3, column=4)
-actualElectric = ctk.CTkEntry(center, placeholder_text="Electric")
-actualElectric.grid(row=5, column=4)
+actual.grid(row=3, column=3)
 
-actualFood = ctk.CTkEntry(center, placeholder_text="Food")
-actualFood.grid(row=6, column=4)
+def setOrNah(expense):
+  check = input(f"Is {expense.name} a set expense? Y/N: ")
+  if check == 'n' or check == 'N':
+    expense.actualValue = ctk.CTkEntry(center, placeholder_text=f"Actual {expense.name}")
+    expense.actualValue.grid(row=4+len(expenseList), column=3)
+    expenseList.append(expense)
+    variableExpenseList.append(expense)
+    saveSetData(setExpenseList, variableExpenseList)
+  else:
+    expenseList.append(expense)
+    setExpenseList.append(expense)
+    saveSetData(setExpenseList, variableExpenseList)
 
-actualWeed = ctk.CTkEntry(center, placeholder_text="Weed")
-actualWeed.grid(row=7, column=4)
 
-def saveData(month, actualElectric, actualFood, actualWeed,expectedSavings, actualSavings ):
-    data = {
-      "month": month,
-      "actual": {
-        "electric": actualElectric,
-        "food": actualFood,
-        "weed": actualWeed,
-      },
-      "savings": {
-        "expected": expectedSavings,
-        "actual": actualSavings,
-      }
-      }
+def addExpense():
+  row = 4 +len(expenseList)
+  name = input("Name of expense: ")
+  value = int(input("Amount: "))
+  expense = Expense(name, value, row, center)
+  setOrNah(expense)
+  expenseName = ctk.CTkLabel(center, text=name)
+  expenseName.grid(row=row, column=1)
+  expenseValue = ctk.CTkLabel(center, text=value)
+  expenseValue.grid(row=row, column=2)
+  
+
+def saveSetData(setExpenseList, variableExpenseList):
+  setExpenses = {}
+  for expense in setExpenseList:
+    setExpenses[expense.name] = expense.value
     
-    with open(outputFile, "a") as f:
-        json.dump(data, f, indent=4)  # Indented for readability
-        
+  variableExpenses = {}
+  for item in variableExpenseList:
+    variableExpenses[item.name] = item.value
 
-def savings(actualFood,actualElectric,actualWeed):
-  expenses = rent + electric + food + weed + wifi + youtube
+  
+  data = {
+    "income": income,
+    "Set Expenses": setExpenses,
+    "Variable Expenses": variableExpenses
+  }
+  
+  with open(setData, "w") as f:
+    json.dump(data, f, indent=4)
+
+#  Todo fix this function to grab values
+def savings(currentValues):
+  total = 0
+  variableTotal = 0
+  setTotal = 0
+  for item in expenseList:
+    # print(item.value)
+    total = total + item.value
+  # print(total)
   monthly = income * 4
-  expectedSavings = monthly - expenses
-  actualExpenses = rent + actualElectric + actualFood + actualWeed + wifi + youtube
-  actualSavings = monthly - actualExpenses
-  messagebox.showinfo("Savings", f"Expected Savings: ${expectedSavings}\n\n Actual Savings: $ {actualSavings}" )
+  expectedSavings = monthly - total
+  # print(expectedSavings)
+  for item in currentValues:
+    # print(item)
+    variableTotal = int(item) + variableTotal
+  # print(variableTotal)
+  for item in setExpenseList:
+    setTotal = item.value + setTotal
+  # print(setTotal)
+  actualTotal = setTotal + variableTotal
+  # print(actualTotal)
+  actualSavings = monthly - actualTotal
+  # print(actualSavings)
+  
+  # messagebox.showinfo("Savings", f"Expected Savings: ${expectedSavings}\n\n Actual Savings: $ {actualSavings}" )
   
   return expectedSavings, actualSavings
 
+def recordData(file, month, setExpenseList, variableExpenseList, currentValues, savingsData):
+  with open(file, "a") as f:
+    f.write(f"# {month}\n\n")
+    f.write(f"---\n\n")
+    f.write(f"###  Expenses\n\n")
+    f.write(f"| Item | Expected | Actual |\n")
+    f.write(f"| ---- | ---- | ---- |\n")
+    for item in setExpenseList:
+      f.write(f"| {item.name} | {item.value} | --- |\n")
+    for item in variableExpenseList:
+      f.write(f"| {item.name} | {item.value} | {item.actualValue.get()} |\n")
+    f.write(f"### Savings this month\n")
+    f.write(f"| Expected | Actual |\n")
+    f.write(f"| --- | --- |\n")
+    f.write(f"| {savingsData[0]} | {savingsData[1]} |\n\n")
+    f.write(f"---\n")
+    messagebox.showinfo("Success", f"Data has successfully been entered. Here is a summary of savings this round.\nExpected Savings: {savingsData[0]}\nActual Savings: {savingsData[1]}" )
+
+
 def submitData():
   currentMonth = month.get()
-  currentElectric = float(actualElectric.get())
-  currentFood = float(actualFood.get())
-  currentWeed = float(actualWeed.get())
-  
-  savingsData = savings(currentFood, currentElectric, currentWeed)
+  currentValues = []
+  for item in variableExpenseList:
+    currentValue = item.actualValue.get()
+    currentValues.append(currentValue)
+  savingsData = savings(currentValues)
 
-  saveData(currentMonth, currentElectric, currentFood, currentWeed, savingsData[0], savingsData[1])
   messagebox.showinfo("Saved", f"Data for {currentMonth} input")
+  recordData(recordFile, currentMonth, setExpenseList, variableExpenseList, currentValues, savingsData)
 
+add = ctk.CTkButton(buttonFrame, text="Add", command=addExpense)
+add.grid(row=0,column=2, pady=5)
 submit = ctk.CTkButton(buttonFrame, text="Submit", command=submitData)
-submit.grid(row=0,column=1, padx=150)
+submit.grid(row=1,column=2)
 
 window.mainloop()
