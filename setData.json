@@ -12,15 +12,15 @@
     },
     "Buckets": {
         "Savings": {
-            "Amount": 1000,
-            "Percentage": 20
+            "Amount": 590.5,
+            "Percentage": 10.0
         },
         "Investments": {
-            "Amount": 500,
+            "Amount": 290.5,
             "Percentage": 10
         },
         "EmergencyFund": {
-            "Amount": 300,
+            "Amount": 1045.25,
             "Percentage": 5
         }
     }
