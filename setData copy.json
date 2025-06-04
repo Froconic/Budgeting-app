@@ -1,0 +1,28 @@
+{
+    "income": 500,
+    "SetExpenses": {
+        "Rent": 800,
+        "Youtube": 20,
+        "Wifi": 20
+    },
+    "VariableExpenses": {
+        "Weed": 250,
+        "Electric": 250,
+        "Food": 250
+    },
+    "Buckets": {},
+    "Goals": {
+        "Travel": {
+            "Target": 7000.0,
+            "Current Amount": 30.0
+        },
+        "New Car": {
+            "Target": 5000,
+            "Current Amount": 0.0
+        },
+        "Home Renovation": {
+            "Target": 2000,
+            "Current Amount": 0.0
+        }
+    }
+}

@@ -1,27 +1,14 @@
 {
     "income": 500,
-    "SetExpenses": {
-        "Rent": 800,
-        "Youtube": 20,
-        "Wifi": 20
-    },
+    "SetExpenses": {},
     "VariableExpenses": {
-        "Weed": 250,
-        "Electric": 250,
-        "Food": 250
+        "Test": 200
     },
     "Buckets": {
-        "Savings": {
-            "Amount": 590.5,
+        "Test": {
+            "Amount": 1750.0,
             "Percentage": 10.0
-        },
-        "Investments": {
-            "Amount": 290.5,
-            "Percentage": 10
-        },
-        "EmergencyFund": {
-            "Amount": 1045.25,
-            "Percentage": 5
         }
-    }
+    },
+    "Goals": {}
 }

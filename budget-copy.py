@@ -1,15 +1,67 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
+from tkinter import simpledialog
 import customtkinter as ctk
 import json
 import os
 
-# TODO Add goals window and apply allocation and display for recording data
+# Add a way to change income then all thats left is theming and fonts
 
-# Load configuration
-with open("config.json", "r") as configFile:
-    config = json.load(configFile)
+def configuration():
+  config = "config.json"
+  
+  if os.path.exists(config):
+    with open(config, "r") as configFile:
+        return json.load(configFile)
 
+  root = tk.Tk()
+  root.withdraw()  # Hide the root window
+  messagebox.showinfo("Setup", "Please select the path to your Set Data file.")
+  setDataPath = filedialog.askdirectory(title="Select Set Data Directory")
+  setDataFile = setDataPath + "/setData.json"
+  print(setDataFile)
+  # setDataFile = os.path.join(setDataPath, "setData.json")
+
+  messagebox.showinfo("Setup", "Please select the path to your Record file.")
+  recordFilePath = filedialog.askdirectory(title="Select Record File Directory")
+  recordFile = recordFilePath + "/record.md"
+  # recordFile = os.path.join(recordFilePath, "record.md")
+  
+  configData = {
+      "setData": setDataFile,
+      "recordFile": recordFile
+  }
+
+  # Also create empty files if they don't exist
+  if not os.path.exists(setDataFile):
+    income = simpledialog.askinteger("Income", "Please enter your weekly income:")
+    with open(setDataFile, "w") as f:
+      json.dump({
+        "income": income,
+        "SetExpenses": {},
+        "VariableExpenses": {},
+        "Buckets": {},
+        "Goals": {}
+      }, f, indent=4)
+
+  if not os.path.exists(recordFile):
+    with open(recordFile, "w") as f:
+      f.write("# Expense Records\n\n")
+
+  configData = {
+      "setData": setDataFile,
+      "recordFile": recordFile
+  }
+
+    # Load configuration
+  with open(config, "w") as configFile:
+      config = json.dump(configData, configFile, indent=4)
+
+  
+  return configData
+
+config = configuration()
 SET_DATA_PATH = config["setData"]
 RECORD_FILE_PATH = config["recordFile"]
 
@@ -18,6 +70,7 @@ expenseList = []
 setExpenseList = []
 variableExpenseList = []
 bucketsList = []
+goalsList = []
 income = 0
 
 
@@ -27,9 +80,9 @@ class Expense:
         self.name = name
         self.value = value
         self.label = ctk.CTkLabel(frame, text=name)
-        self.label.grid(row=row, column=1)
+        self.label.grid(row=row, column=1, padx=10, pady=5)
         self.valueLabel = ctk.CTkLabel(frame, text=value)
-        self.valueLabel.grid(row=row, column=2)
+        self.valueLabel.grid(row=row, column=2, padx=10)
         self.actualValue = None  # For variable expenses
 
     def addActualEntry(self, frame, row):
@@ -46,7 +99,6 @@ class Bucket:
         self.name = name
         self.total = round(total, 3)
         self.percentage = percentage
-        self.goals = []
 
         if frame:
             self.label = ctk.CTkLabel(frame, text=name)
@@ -61,45 +113,40 @@ class Bucket:
         self.total += round(allocation, 3)
         return allocation
 
-    def addGoal(self, goal):
-        self.goals.append(goal)
-
     def toDict(self):
         return {
             "name": self.name,
             "Percentage": self.percentage,
             "Amount": self.total,
-            "Goals": [goal.toDict() for goal in self.goals]
         }
 
 
 # Goal class for each bucket
 class Goal:
-    def __init__(self, name, targetAmount, steps=None):
+    def __init__(self, name, target, currentAmount, frame=None):
         self.name = name
-        self.targetAmount = targetAmount
-        self.steps = steps if steps else []
-        self.allocatedAmount = 0.0
-
-    def addStep(self, name, amount):
-        self.steps.append({"name": name, "amount": amount, "complete": False})
+        self.target = round(target, 3)
+        self.currentAmount = currentAmount
+        
+        if frame:
+            self.label = ctk.CTkLabel(frame, text=name)
+            self.label.grid(row=4 + len(goalsList), column=0, padx=10, pady=5)
+            self.targetLabel = ctk.CTkLabel(frame, text=f"Target: {self.target}")
+            self.targetLabel.grid(row=4 + len(goalsList), column=1, padx=10, pady=5)
+            self.currentLabel = ctk.CTkLabel(frame, text=f"Allocated: {self.currentAmount}")
+            self.currentLabel.grid(row=4 + len(goalsList), column=2, padx=10, pady=5)
 
     def allocateToGoal(self, amount):
-        self.allocatedAmount += amount
-
-    def completeStep(self, stepIndex):
-        if 0 <= stepIndex < len(self.steps):
-            self.steps[stepIndex]["complete"] = True
+        self.currentAmount += round(amount, 3)
 
     def isComplete(self):
-        return self.allocatedAmount >= self.targetAmount
+        return self.currentAmount >= self.target
 
     def toDict(self):
         return {
             "name": self.name,
-            "targetAmount": self.targetAmount,
-            "steps": self.steps,
-            "allocatedAmount": self.allocatedAmount
+            "target": self.target,
+            "currentAmount": self.currentAmount
         }
 
 
@@ -108,19 +155,21 @@ def loadJson(filePath):
     if os.path.exists(filePath):
         with open(filePath, "r") as file:
             return json.load(file)
-    return {"income": 0, "SetExpenses": {}, "VariableExpenses": {}, "Buckets": {}}
+    return {"income": 0, "SetExpenses": {}, "VariableExpenses": {}, "Buckets": {}, "Goals": {}}
 
 
 def saveData():
     setExpenses = {exp.name: exp.value for exp in setExpenseList}
     variableExpenses = {exp.name: exp.value for exp in variableExpenseList}
     bucketsDict = {bucket.name: {"Amount": bucket.total, "Percentage": bucket.percentage} for bucket in bucketsList}
+    goalsDict = {goal.name: {"Target": goal.target, "Current Amount": goal.currentAmount} for goal in goalsList}
 
     data = {
         "income": income,
         "SetExpenses": setExpenses,
         "VariableExpenses": variableExpenses,
-        "Buckets": bucketsDict
+        "Buckets": bucketsDict,
+        "Goals": goalsDict
     }
     with open(SET_DATA_PATH, "w") as f:
         json.dump(data, f, indent=4)
@@ -159,7 +208,7 @@ def recordDataToFile(monthValue, currentValues, savingsData):
 # Core functions
 def submitData(monthEntry):
     currentMonth = monthEntry.get()
-    currentValues = [exp.actualValue.get() if exp.actualValue else "0" for exp in variableExpenseList]
+    currentValues = [round(int(exp.actualValue.get()), 3) if exp.actualValue else "0" for exp in variableExpenseList]
 
     savingsData = calculateSavings(currentValues)
 
@@ -168,10 +217,11 @@ def submitData(monthEntry):
         previousTotal = bucket.total
         allocation = bucket.allocate(savingsData[1])
         messagebox.showinfo(bucket.name, f"Previous Total: {previousTotal}\nNew Total: {bucket.total}\nAllocated: {allocation}")
+        bucket.totalLabel.configure(text=f"{bucket.total}")
 
     saveData()
     recordDataToFile(currentMonth, currentValues, savingsData)
-    messagebox.showinfo("Saved", f"Data for {currentMonth} saved and allocated.")
+    messagebox.showinfo("Saved", f"Data for {currentMonth} saved and recorded.")
 
 
 def deleteExpense():
@@ -283,7 +333,7 @@ def openAddExpenseModal(parentFrame):
     confirmButton = ctk.CTkButton(modal, text="Add Expense", command=confirmAdd)
     confirmButton.pack(pady=10)
 
-
+# Add a way to add buckets
 def bucketWindow(buckets):
     bucketsWindow = ctk.CTkToplevel()
     bucketsWindow.title("Buckets")
@@ -342,7 +392,202 @@ def bucketWindow(buckets):
 
         ctk.CTkButton(modal, text="Save", command=applyChanges).pack(pady=10)
 
+    def addBucket():
+        bucketModal = ctk.CTkToplevel()
+        bucketModal.title("Add Bucket")
+        bucketModal.geometry("300x200")
+
+        nameEntry = ctk.CTkEntry(bucketModal, placeholder_text="Bucket Name")
+        nameEntry.pack(pady=5)
+        percentageEntry = ctk.CTkEntry(bucketModal, placeholder_text="Percentage")
+        percentageEntry.pack(pady=5)
+        totalEntry = ctk.CTkEntry(bucketModal, placeholder_text="Total Amount")
+        totalEntry.pack(pady=5)
+
+        def confirmAddBucket():
+            bucketName = nameEntry.get()
+            try:
+                percentage = float(percentageEntry.get())
+                total = float(totalEntry.get())
+                newBucket = Bucket(bucketName, total, percentage, centerFrame)
+                bucketsList.append(newBucket)
+                saveData()
+                bucketModal.destroy()
+            except ValueError:
+                messagebox.showerror("Invalid Input", "Percentage and Total must be numbers")
+
+        ctk.CTkButton(bucketModal, text="Confirm", command=confirmAddBucket).pack(pady=10)
+    def deleteBucket():
+        modal = ctk.CTkToplevel()
+        modal.title("Delete Bucket")
+        modal.geometry("400x200")
+
+        names = [bucket.name for bucket in bucketsList]
+        selectedName = ctk.StringVar(value=names[0] if names else "")
+
+        dropdown = ctk.CTkOptionMenu(modal, values=names, variable=selectedName)
+        dropdown.pack(pady=10)
+
+        def confirmDelete():
+            chosenName = selectedName.get()
+            for bucket in bucketsList:
+                if bucket.name == chosenName:
+                    bucket.label.destroy()
+                    bucket.percentageLabel.destroy()
+                    bucket.totalLabel.destroy()
+                    bucketsList.remove(bucket)
+                    saveData()
+                    messagebox.showinfo("Deleted", f"{chosenName} has been deleted.")
+                    modal.destroy()
+                    return
+
+        ctk.CTkButton(modal, text="Delete", command=confirmDelete).pack(pady=10)
+
     ctk.CTkButton(centerFrame, text="Edit Buckets", command=editBuckets).grid(row=5 + len(bucketsList), column=3, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Add Bucket", command=addBucket).grid(row=6 + len(bucketsList), column=3, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Delete Bucket", command=deleteBucket).grid(row=7 + len(bucketsList), column=3, padx=10, pady=5)
+
+def goalsWindow(goals):
+  modal = ctk.CTkToplevel()
+  modal.title(f"Goals")
+  modal.geometry("400x700")
+  
+  ctk.CTkLabel(modal, text=f"Goals").pack(anchor="center", pady=10)
+  centerFrame = ctk.CTkFrame(modal)
+  centerFrame.pack(anchor="center", pady=20, padx=20, fill="both", expand=True)
+  
+  for name, data in goals.items():
+      goal = Goal(name, data["Target"], data["Current Amount"], centerFrame)
+      goalsList.append(goal)
+  
+  def editGoals():
+    modal = ctk.CTkToplevel()
+    modal.title("Edit Goals")
+    modal.geometry("400x300")
+    
+    names = [goal.name for goal in goalsList]
+    selectedName = ctk.StringVar(value=names[0] if names else "")
+    
+    dropdown = ctk.CTkOptionMenu(modal, values=names, variable=selectedName)
+    dropdown.pack(pady=10)
+    
+    targetEntry = ctk.CTkEntry(modal, placeholder_text="New Target Amount")
+    targetEntry.pack(pady=10)
+    currentEntry = ctk.CTkEntry(modal, placeholder_text="New Allocated Amount")
+    currentEntry.pack(pady=10)
+    
+    def applyChanges():
+        chosenName = selectedName.get()
+        for goal in goalsList:
+            if goal.name == chosenName:
+                newAllocated = currentEntry.get()
+                newTarget = targetEntry.get()
+                if newAllocated:
+                    try:
+                        goal.currentAmount = float(newAllocated)
+                        goal.currentLabel.configure(text=f"Allocated: {goal.currentAmount}")
+                    except ValueError:
+                        messagebox.showerror("Error", "Allocated amount must be a number.")
+                        return
+                if newTarget:
+                    try:
+                        goal.target = float(newTarget)
+                        goal.targetLabel.configure(text=f"Target: {goal.target}")
+                    except ValueError:
+                        messagebox.showerror("Error", "Target must be a number.")
+                        return
+                saveData()
+                messagebox.showinfo("Success", "Goal updated successfully.")
+                modal.destroy()
+                return
+    ctk.CTkButton(modal, text="Save", command=applyChanges).pack(pady=10)
+    
+  def allocateToGoal():
+    modal = ctk.CTkToplevel()
+    modal.title("Allocate to Goal")
+    modal.geometry("400x200")
+
+    names = [goal.name for goal in goalsList]
+    selectedName = ctk.StringVar(value=names[0] if names else "")
+
+    dropdown = ctk.CTkOptionMenu(modal, values=names, variable=selectedName)
+    dropdown.pack(pady=10)
+
+    amountEntry = ctk.CTkEntry(modal, placeholder_text="Amount to allocate")
+    amountEntry.pack(pady=10)
+
+    def applyAllocation():
+        chosenName = selectedName.get()
+        try:
+            amount = float(amountEntry.get())
+        except ValueError:
+            messagebox.showerror("Error", "Amount must be a number.")
+            return
+
+        for goal in goalsList:
+            if goal.name == chosenName:
+                goal.allocateToGoal(amount)
+                goal.currentLabel.configure(text=f"Allocated: {goal.currentAmount}")
+                saveData()
+                messagebox.showinfo("Success", f"Allocated {amount} to {goal.name}.")
+                modal.destroy()
+                return
+
+    ctk.CTkButton(modal, text="Allocate", command=applyAllocation).pack(pady=10)
+  
+  def addGoal():
+    goalModal = ctk.CTkToplevel()
+    goalModal.title("Add Goal")
+    goalModal.geometry("300x200")
+    
+    nameEntry = ctk.CTkEntry(goalModal, placeholder_text="Goal Name")
+    nameEntry.pack(pady=5)
+    targetEntry = ctk.CTkEntry(goalModal, placeholder_text="Target Amount")
+    targetEntry.pack(pady=5)
+    ctk.CTkButton(goalModal, text="Confirm", command=lambda: confirmAddGoal()).pack(pady=10)
+    
+    def confirmAddGoal():
+      goalName = nameEntry.get()
+      try:
+          targetAmount = float(targetEntry.get())
+          newGoal = Goal(goalName, targetAmount, centerFrame)
+          goalsList.append(newGoal)
+          saveData()
+          goalModal.destroy()
+      except ValueError:
+          messagebox.showerror("Invalid Input", "Target amount must be a number")
+
+  def deleteGoal():
+    modal = ctk.CTkToplevel()
+    modal.title("Delete Goal")
+    modal.geometry("400x200")
+
+    names = [goal.name for goal in goalsList]
+    selectedName = ctk.StringVar(value=names[0] if names else "")
+
+    dropdown = ctk.CTkOptionMenu(modal, values=names, variable=selectedName)
+    dropdown.pack(pady=10)
+
+    def confirmDelete():
+        chosenName = selectedName.get()
+        for goal in goalsList:
+            if goal.name == chosenName:
+                goal.label.destroy()
+                goal.targetLabel.destroy()
+                goal.currentLabel.destroy()
+                goalsList.remove(goal)
+                saveData()
+                messagebox.showinfo("Deleted", f"{chosenName} has been deleted.")
+                modal.destroy()
+                return
+
+    ctk.CTkButton(modal, text="Delete", command=confirmDelete).pack(pady=10)
+
+  ctk.CTkButton(modal, text="Add Goal", command=addGoal).pack(pady=10)
+  ctk.CTkButton(modal, text="Edit Goals", command=editGoals).pack(pady=10)
+  ctk.CTkButton(modal, text="Allocate to Goal", command=allocateToGoal).pack(pady=10)
+  ctk.CTkButton(modal, text="Delete Goal", command=deleteGoal).pack(pady=10)
+  ctk.CTkButton(modal, text="Save", command=saveData).pack(pady=10)
 
 
 def main():
@@ -352,18 +597,28 @@ def main():
     budget = loadJson(SET_DATA_PATH)
     income = budget["income"]
     buckets = budget["Buckets"]
+    goals = budget["Goals"]
 
     ctk.set_appearance_mode("dark")
+    # ctk.set_default_color_theme("green")
+    ctk.set_default_color_theme("grey-green-theme.json")
     window = ctk.CTk()
     window.title("Budget Calculator")
-    window.geometry("700x500")
+    window.geometry("400x700")
     window.grid_rowconfigure(1, weight=1)
     window.grid_columnconfigure(0, weight=1)
 
     centerFrame = ctk.CTkFrame(window)
-    centerFrame.grid(row=0, pady=20, padx=20)
+    centerFrame.grid(row=0, pady=20, padx=20, ipadx=20, ipady=20)
     buttonFrame = ctk.CTkFrame(window)
     buttonFrame.grid(row=1, pady=10)
+    
+    titleLabel = ctk.CTkLabel(centerFrame, text="Expenses", font=("JetBrains Mono", 24))
+    titleLabel.grid(row=0, column=3, pady=10)
+
+    # Month entry
+    monthEntry = ctk.CTkEntry(centerFrame, placeholder_text="Enter month")
+    monthEntry.grid(row=1, column=3, padx=10, pady=5)
 
     # Load expenses
     for name, value in budget["SetExpenses"].items():
@@ -379,16 +634,13 @@ def main():
         expenseList.append(exp)
         variableExpenseList.append(exp)
 
-    # Month entry
-    monthEntry = ctk.CTkEntry(buttonFrame, placeholder_text="Enter month")
-    monthEntry.pack(pady=5)
-
     # Buttons
     ctk.CTkButton(buttonFrame, text="Submit Data", command=lambda: submitData(monthEntry)).pack(pady=5)
     ctk.CTkButton(buttonFrame, text="Add Expense", command=lambda: openAddExpenseModal(centerFrame)).pack(pady=5)
     ctk.CTkButton(buttonFrame, text="Edit Expense", command=editExpense).pack(pady=5)
     ctk.CTkButton(buttonFrame, text="Delete Expense", command=deleteExpense).pack(pady=5)
     ctk.CTkButton(buttonFrame, text="View Buckets", command=lambda: bucketWindow(buckets)).pack(pady=5)
+    ctk.CTkButton(buttonFrame, text="Open Goals", command=lambda: goalsWindow(goals)).pack(pady=5)
 
     window.mainloop()
 
