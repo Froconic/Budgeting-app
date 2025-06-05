@@ -1,14 +1,45 @@
 {
     "income": 500,
-    "SetExpenses": {},
+    "SetExpenses": {
+        "Rent": 800,
+        "Youtube": 20,
+        "Wifi": 20
+    },
     "VariableExpenses": {
-        "Test": 200
+        "Weed": 250,
+        "Electric": 250,
+        "Food": 250
     },
     "Buckets": {
-        "Test": {
-            "Amount": 1750.0,
+        "Savings": {
+            "Amount": 200.0,
             "Percentage": 10.0
+        },
+        "Travel": {
+            "Amount": 10.0,
+            "Percentage": 5.0
+        },
+        "Big Bills": {
+            "Amount": 150.0,
+            "Percentage": 5.0
         }
     },
-    "Goals": {}
+    "Goals": {
+        "Amsterdam": {
+            "Target": 3000.0,
+            "Current Amount": 0
+        },
+        "One month vacation": {
+            "Target": 2000.0,
+            "Current Amount": 0
+        },
+        "Circle round mat": {
+            "Target": 140.0,
+            "Current Amount": 0
+        },
+        "New monitor": {
+            "Target": 200.0,
+            "Current Amount": 0
+        }
+    }
 }

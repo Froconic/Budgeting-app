@@ -25,7 +25,7 @@ def configuration():
 
   messagebox.showinfo("Setup", "Please select the path to your Record file.")
   recordFilePath = filedialog.askdirectory(title="Select Record File Directory")
-  recordFile = recordFilePath + "/record.md"
+  recordFile = recordFilePath + "/Budget.md"
   # recordFile = os.path.join(recordFilePath, "record.md")
   
   configData = {
@@ -550,7 +550,7 @@ def goalsWindow(goals):
       goalName = nameEntry.get()
       try:
           targetAmount = float(targetEntry.get())
-          newGoal = Goal(goalName, targetAmount, centerFrame)
+          newGoal = Goal(goalName, targetAmount, currentAmount=0, frame=centerFrame)
           goalsList.append(newGoal)
           saveData()
           goalModal.destroy()
