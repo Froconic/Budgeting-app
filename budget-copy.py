@@ -4,9 +4,14 @@ from tkinter import filedialog
 from tkinter import simpledialog
 import customtkinter as ctk
 import json
-import os
+import os, sys
 
 # Add a way to change income then all thats left is theming and fonts
+
+def resourcePath(rel_path: str) -> str:
+    """Return an absolute path that works both in dev & when frozen."""
+    base = getattr(sys, '_MEIPASS', os.path.abspath("."))
+    return os.path.join(base, rel_path)
 
 def configuration():
   config = "config.json"
@@ -337,7 +342,7 @@ def openAddExpenseModal(parentFrame):
 def bucketWindow(buckets):
     bucketsWindow = ctk.CTkToplevel()
     bucketsWindow.title("Buckets")
-    bucketsWindow.geometry("700x500")
+    bucketsWindow.geometry("400x400")
 
     ctk.CTkLabel(bucketsWindow, text="Buckets").pack(anchor="center")
     centerFrame = ctk.CTkFrame(bucketsWindow)
@@ -443,14 +448,14 @@ def bucketWindow(buckets):
 
         ctk.CTkButton(modal, text="Delete", command=confirmDelete).pack(pady=10)
 
-    ctk.CTkButton(centerFrame, text="Edit Buckets", command=editBuckets).grid(row=5 + len(bucketsList), column=3, padx=10, pady=5)
-    ctk.CTkButton(centerFrame, text="Add Bucket", command=addBucket).grid(row=6 + len(bucketsList), column=3, padx=10, pady=5)
-    ctk.CTkButton(centerFrame, text="Delete Bucket", command=deleteBucket).grid(row=7 + len(bucketsList), column=3, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Edit Buckets", command=editBuckets).grid(row=5 + len(bucketsList), column=1, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Add Bucket", command=addBucket).grid(row=6 + len(bucketsList), column=1, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Delete Bucket", command=deleteBucket).grid(row=7 + len(bucketsList), column=1, padx=10, pady=5)
 
 def goalsWindow(goals):
   modal = ctk.CTkToplevel()
   modal.title(f"Goals")
-  modal.geometry("400x700")
+  modal.geometry("400x500")
   
   ctk.CTkLabel(modal, text=f"Goals").pack(anchor="center", pady=10)
   centerFrame = ctk.CTkFrame(modal)
@@ -601,7 +606,7 @@ def main():
 
     ctk.set_appearance_mode("dark")
     # ctk.set_default_color_theme("green")
-    ctk.set_default_color_theme("grey-green-theme.json")
+    ctk.set_default_color_theme(resourcePath("grey-green-theme.json"))
     window = ctk.CTk()
     window.title("Budget Calculator")
     window.geometry("400x700")

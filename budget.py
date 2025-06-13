@@ -1,19 +1,67 @@
 import tkinter as tk
 from tkinter import messagebox
+from tkinter import filedialog
+from tkinter import simpledialog
 import customtkinter as ctk
 import json
 import os
 
-# TODO change fonts
-# TODO add a way to edit income
-# Todo filedialog to choose record files? or just document what json is needed
-# TODO exe file
+# Add a way to change income then all thats left is theming and fonts
 
-# Load configuration
-configFile = "config.json"
-with open("config.json", "r") as configFile:
-    config = json.load(configFile)
+def configuration():
+  config = "config.json"
+  
+  if os.path.exists(config):
+    with open(config, "r") as configFile:
+        return json.load(configFile)
 
+  root = tk.Tk()
+  root.withdraw()  # Hide the root window
+  messagebox.showinfo("Setup", "Please select the path to your Set Data file.")
+  setDataPath = filedialog.askdirectory(title="Select Set Data Directory")
+  setDataFile = setDataPath + "/setData.json"
+  print(setDataFile)
+  # setDataFile = os.path.join(setDataPath, "setData.json")
+
+  messagebox.showinfo("Setup", "Please select the path to your Record file.")
+  recordFilePath = filedialog.askdirectory(title="Select Record File Directory")
+  recordFile = recordFilePath + "/Budget.md"
+  # recordFile = os.path.join(recordFilePath, "record.md")
+  
+  configData = {
+      "setData": setDataFile,
+      "recordFile": recordFile
+  }
+
+  # Also create empty files if they don't exist
+  if not os.path.exists(setDataFile):
+    income = simpledialog.askinteger("Income", "Please enter your weekly income:")
+    with open(setDataFile, "w") as f:
+      json.dump({
+        "income": income,
+        "SetExpenses": {},
+        "VariableExpenses": {},
+        "Buckets": {},
+        "Goals": {}
+      }, f, indent=4)
+
+  if not os.path.exists(recordFile):
+    with open(recordFile, "w") as f:
+      f.write("# Expense Records\n\n")
+
+  configData = {
+      "setData": setDataFile,
+      "recordFile": recordFile
+  }
+
+    # Load configuration
+  with open(config, "w") as configFile:
+      config = json.dump(configData, configFile, indent=4)
+
+  
+  return configData
+
+config = configuration()
 SET_DATA_PATH = config["setData"]
 RECORD_FILE_PATH = config["recordFile"]
 
@@ -160,7 +208,7 @@ def recordDataToFile(monthValue, currentValues, savingsData):
 # Core functions
 def submitData(monthEntry):
     currentMonth = monthEntry.get()
-    currentValues = [round(exp.actualValue.get(), 3) if exp.actualValue else "0" for exp in variableExpenseList]
+    currentValues = [round(int(exp.actualValue.get()), 3) if exp.actualValue else "0" for exp in variableExpenseList]
 
     savingsData = calculateSavings(currentValues)
 
@@ -169,10 +217,11 @@ def submitData(monthEntry):
         previousTotal = bucket.total
         allocation = bucket.allocate(savingsData[1])
         messagebox.showinfo(bucket.name, f"Previous Total: {previousTotal}\nNew Total: {bucket.total}\nAllocated: {allocation}")
+        bucket.totalLabel.configure(text=f"{bucket.total}")
 
     saveData()
     recordDataToFile(currentMonth, currentValues, savingsData)
-    messagebox.showinfo("Saved", f"Data for {currentMonth} saved and currentAmount.")
+    messagebox.showinfo("Saved", f"Data for {currentMonth} saved and recorded.")
 
 
 def deleteExpense():
@@ -284,11 +333,11 @@ def openAddExpenseModal(parentFrame):
     confirmButton = ctk.CTkButton(modal, text="Add Expense", command=confirmAdd)
     confirmButton.pack(pady=10)
 
-
+# Add a way to add buckets
 def bucketWindow(buckets):
     bucketsWindow = ctk.CTkToplevel()
     bucketsWindow.title("Buckets")
-    bucketsWindow.geometry("700x500")
+    bucketsWindow.geometry("400x400")
 
     ctk.CTkLabel(bucketsWindow, text="Buckets").pack(anchor="center")
     centerFrame = ctk.CTkFrame(bucketsWindow)
@@ -343,13 +392,65 @@ def bucketWindow(buckets):
 
         ctk.CTkButton(modal, text="Save", command=applyChanges).pack(pady=10)
 
-    ctk.CTkButton(centerFrame, text="Edit Buckets", command=editBuckets).grid(row=5 + len(bucketsList), column=3, padx=10, pady=5)
+    def addBucket():
+        bucketModal = ctk.CTkToplevel()
+        bucketModal.title("Add Bucket")
+        bucketModal.geometry("300x200")
 
-# Add a way to edit and allocate to goals
+        nameEntry = ctk.CTkEntry(bucketModal, placeholder_text="Bucket Name")
+        nameEntry.pack(pady=5)
+        percentageEntry = ctk.CTkEntry(bucketModal, placeholder_text="Percentage")
+        percentageEntry.pack(pady=5)
+        totalEntry = ctk.CTkEntry(bucketModal, placeholder_text="Total Amount")
+        totalEntry.pack(pady=5)
+
+        def confirmAddBucket():
+            bucketName = nameEntry.get()
+            try:
+                percentage = float(percentageEntry.get())
+                total = float(totalEntry.get())
+                newBucket = Bucket(bucketName, total, percentage, centerFrame)
+                bucketsList.append(newBucket)
+                saveData()
+                bucketModal.destroy()
+            except ValueError:
+                messagebox.showerror("Invalid Input", "Percentage and Total must be numbers")
+
+        ctk.CTkButton(bucketModal, text="Confirm", command=confirmAddBucket).pack(pady=10)
+    def deleteBucket():
+        modal = ctk.CTkToplevel()
+        modal.title("Delete Bucket")
+        modal.geometry("400x200")
+
+        names = [bucket.name for bucket in bucketsList]
+        selectedName = ctk.StringVar(value=names[0] if names else "")
+
+        dropdown = ctk.CTkOptionMenu(modal, values=names, variable=selectedName)
+        dropdown.pack(pady=10)
+
+        def confirmDelete():
+            chosenName = selectedName.get()
+            for bucket in bucketsList:
+                if bucket.name == chosenName:
+                    bucket.label.destroy()
+                    bucket.percentageLabel.destroy()
+                    bucket.totalLabel.destroy()
+                    bucketsList.remove(bucket)
+                    saveData()
+                    messagebox.showinfo("Deleted", f"{chosenName} has been deleted.")
+                    modal.destroy()
+                    return
+
+        ctk.CTkButton(modal, text="Delete", command=confirmDelete).pack(pady=10)
+
+    ctk.CTkButton(centerFrame, text="Edit Buckets", command=editBuckets).grid(row=5 + len(bucketsList), column=1, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Add Bucket", command=addBucket).grid(row=6 + len(bucketsList), column=1, padx=10, pady=5)
+    ctk.CTkButton(centerFrame, text="Delete Bucket", command=deleteBucket).grid(row=7 + len(bucketsList), column=1, padx=10, pady=5)
+
 def goalsWindow(goals):
   modal = ctk.CTkToplevel()
   modal.title(f"Goals")
-  modal.geometry("400x700")
+  modal.geometry("400x500")
   
   ctk.CTkLabel(modal, text=f"Goals").pack(anchor="center", pady=10)
   centerFrame = ctk.CTkFrame(modal)
@@ -449,7 +550,7 @@ def goalsWindow(goals):
       goalName = nameEntry.get()
       try:
           targetAmount = float(targetEntry.get())
-          newGoal = Goal(goalName, targetAmount, centerFrame)
+          newGoal = Goal(goalName, targetAmount, currentAmount=0, frame=centerFrame)
           goalsList.append(newGoal)
           saveData()
           goalModal.destroy()
@@ -499,7 +600,9 @@ def main():
     goals = budget["Goals"]
 
     ctk.set_appearance_mode("dark")
+    ctk.set_default_color_theme("green")
     window = ctk.CTk()
+    window.iconbitmap("C:/Users/akira/Desktop/Stuff/Code/GitHub/Budgeting-app/dist/budget/_internal/budget.py/assets/icons/CustomTkinter_icon_Windows.ico")
     window.title("Budget Calculator")
     window.geometry("400x700")
     window.grid_rowconfigure(1, weight=1)
@@ -540,7 +643,6 @@ def main():
     ctk.CTkButton(buttonFrame, text="Open Goals", command=lambda: goalsWindow(goals)).pack(pady=5)
 
     window.mainloop()
-
 
 if __name__ == "__main__":
     main()
