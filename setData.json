@@ -1,45 +1,42 @@
 {
-    "income": 500,
-    "SetExpenses": {
-        "Rent": 800,
-        "Youtube": 20,
-        "Wifi": 20
+  "income": 500,
+  "SetExpenses": {
+    "Rent": 833,
+    "Youtube": 25,
+    "Wifi": 27
+  },
+  "VariableExpenses": {
+    "Weed": 300,
+    "Electric": 150,
+    "Food": 450,
+    "Miscellaneous": 100
+  },
+  "Buckets": {
+    "Savings": {
+      "Amount": 229.37,
+      "Percentage": 10.0
     },
-    "VariableExpenses": {
-        "Weed": 250,
-        "Electric": 250,
-        "Food": 250
+    "Travel": {
+      "Amount": 1.86,
+      "Percentage": 5.0
     },
-    "Buckets": {
-        "Savings": {
-            "Amount": 200.0,
-            "Percentage": 10.0
-        },
-        "Travel": {
-            "Amount": 10.0,
-            "Percentage": 5.0
-        },
-        "Big Bills": {
-            "Amount": 150.0,
-            "Percentage": 5.0
-        }
+    "Fun": {
+      "Amount": 0.0,
+      "Percentage": 2.0
     },
-    "Goals": {
-        "Amsterdam": {
-            "Target": 3000.0,
-            "Current Amount": 0
-        },
-        "One month vacation": {
-            "Target": 2000.0,
-            "Current Amount": 0
-        },
-        "Circle round mat": {
-            "Target": 140.0,
-            "Current Amount": 0
-        },
-        "New monitor": {
-            "Target": 200.0,
-            "Current Amount": 0
-        }
+    "Big Bills": {
+      "Amount": 162.30,
+      "Percentage": 5.0
     }
+  },
+  "Goals": {
+    "Emergency Funds": {
+      "Target": 1000.0,
+      "Current Amount": 0
+    },
+    "Move off island": {
+      "Target": 5000.0,
+      "Current Amount": 0
+    }
+  }
 }

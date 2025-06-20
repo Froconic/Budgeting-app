@@ -20,7 +20,6 @@ def configuration():
   messagebox.showinfo("Setup", "Please select the path to your Set Data file.")
   setDataPath = filedialog.askdirectory(title="Select Set Data Directory")
   setDataFile = setDataPath + "/setData.json"
-  print(setDataFile)
   # setDataFile = os.path.join(setDataPath, "setData.json")
 
   messagebox.showinfo("Setup", "Please select the path to your Record file.")
@@ -180,14 +179,14 @@ def calculateSavings(currentValues):
     expectedTotal = sum(exp.value for exp in expenseList)
     expectedSavings = monthlyIncome - expectedTotal
 
-    variableTotal = sum(int(val) for val in currentValues)
+    variableTotal = sum(float(val) for val in currentValues)
     setTotal = sum(exp.value for exp in setExpenseList)
-    actualSavings = monthlyIncome - (variableTotal + setTotal)
+    actualSavings = round(monthlyIncome - (variableTotal + setTotal), 3)
 
     return expectedSavings, actualSavings
 
 
-def recordDataToFile(monthValue, currentValues, savingsData):
+def recordDataToFile(monthValue, currentValues, savingsData, buckets):
     with open(RECORD_FILE_PATH, "a") as f:
         f.write(f"# {monthValue}\n\n---\n\n### Expenses\n\n")
         f.write("| Item | Expected | Actual |\n| ---- | ---- | ---- |\n")
@@ -200,27 +199,30 @@ def recordDataToFile(monthValue, currentValues, savingsData):
         f.write(f"| {savingsData[0]} | {savingsData[1]} |\n\n")
         f.write("---\n\n### Accounts this month\n")
         f.write("| Name | Amount | % |\n| --- | --- | --- |\n")
-        for bucket in bucketsList:
-            f.write(f"| {bucket.name} | {bucket.total} | {bucket.percentage} |\n")
+        for name, data in buckets.items():
+            f.write(f"| {name} | {data['Amount']} | {data['Percentage']} |\n")
+        f.write("\n---\n\n")
     messagebox.showinfo("Success", f"Data recorded.\nExpected Savings: {savingsData[0]}\nActual Savings: {savingsData[1]}")
 
 
 # Core functions
 def submitData(monthEntry):
+    budget = loadJson(SET_DATA_PATH)
+    buckets = budget["Buckets"]
     currentMonth = monthEntry.get()
-    currentValues = [round(int(exp.actualValue.get()), 3) if exp.actualValue else "0" for exp in variableExpenseList]
+    currentValues = [round(float(exp.actualValue.get()), 3) if exp.actualValue else "0" for exp in variableExpenseList]
 
     savingsData = calculateSavings(currentValues)
 
     # Allocate savings to buckets
+    messagebox.showinfo("Allocation", "Allocation will commence")
     for bucket in bucketsList:
-        previousTotal = bucket.total
-        allocation = bucket.allocate(savingsData[1])
+        previousTotal = round(bucket.total, 3)
+        allocation = round(bucket.allocate(savingsData[1]),3)
         messagebox.showinfo(bucket.name, f"Previous Total: {previousTotal}\nNew Total: {bucket.total}\nAllocated: {allocation}")
-        bucket.totalLabel.configure(text=f"{bucket.total}")
 
+    recordDataToFile(currentMonth, currentValues, savingsData, buckets)
     saveData()
-    recordDataToFile(currentMonth, currentValues, savingsData)
     messagebox.showinfo("Saved", f"Data for {currentMonth} saved and recorded.")
 
 
@@ -285,7 +287,7 @@ def editExpense():
                     expense.label.configure(text=newName)
                 if newValue:
                     try:
-                        expense.value = int(newValue)
+                        expense.value = float(newValue)
                         expense.valueLabel.configure(text=newValue)
                     except ValueError:
                         messagebox.showerror("Error", "Value must be a number.")
@@ -315,7 +317,7 @@ def openAddExpenseModal(parentFrame):
     def confirmAdd():
         name = nameEntry.get()
         try:
-            value = int(valueEntry.get())
+            value = float(valueEntry.get())
         except ValueError:
             messagebox.showerror("Invalid Input", "Amount must be a number")
             return
@@ -633,6 +635,10 @@ def main():
         exp.addActualEntry(centerFrame, row)
         expenseList.append(exp)
         variableExpenseList.append(exp)
+    
+    for name, data in buckets.items():
+        bucket = Bucket(name, data["Amount"], data["Percentage"], frame = None)
+        bucketsList.append(bucket)
 
     # Buttons
     ctk.CTkButton(buttonFrame, text="Submit Data", command=lambda: submitData(monthEntry)).pack(pady=5)
